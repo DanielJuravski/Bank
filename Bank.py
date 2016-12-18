@@ -65,7 +65,8 @@ class BankLogic:
             msgToClient = "True"
         else:
             msgToClient = "False"
-        i_clientSocket.send(msgToClient)
+        msgToClientDump = cPickle.dumps(msgToClient)
+        i_clientSocket.send(msgToClientDump)
     def checkFromUserPersonName(self, i_personName):
         if i_personName.isalpha():
             return True
@@ -125,16 +126,19 @@ class BankLogic:
                         self.operationsMenu(i_clientSocket, i_data, client)
         else:
             dataToSend = list()
+            searchInListOfClients = False
             for client in listOfClients:
                 if client.getPersonId() == IDToCheck and client.getPersonPassword() == passwordToCheck:
+                    searchInListOfClients = True
                     token = binascii.b2a_hex(os.urandom(10))
                     self.tokenDB[IDToCheck] = token
                     dataToSend.append(client)
                     dataToSend.append(token)
                     dataToSendStr = cPickle.dumps(dataToSend) #dataToSend = [client,token]
                     i_clientSocket.send(dataToSendStr)
-                else:
-                    i_clientSocket.send("False")
+            if searchInListOfClients == False:
+                dataToSendStr = cPickle.dumps("False")
+                i_clientSocket.send(dataToSendStr)
     def operationsMenu(self, i_clientSocket, i_data, i_client):
         clientID = i_data[1]
         operationChoice = i_data[4]

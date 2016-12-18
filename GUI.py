@@ -207,7 +207,8 @@ class ConsoleGUI:
         dataArreyStr = cPickle.dumps(dataArrey)
         i_clientSocket.send(dataArreyStr)
         serverFeedback = i_clientSocket.recv(1024)
-        if serverFeedback == "True":
+        serverFeedbackStr = cPickle.loads(serverFeedback)
+        if serverFeedbackStr == "True":
             print "You have joined to the bank!"
         else:
             print "You have entered illegal data, please try again."

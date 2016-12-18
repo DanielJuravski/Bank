@@ -4,7 +4,7 @@ import os
 
 class DB(list):
     def __init__(self):
-        filePath = "C:\\Users\\Dani\\Documents\\Python\\BankServerClient\\File.txt"
+        filePath = "C:\\PythonProjects\\Bank\\File.txt"
         isFileExcist = os.path.isfile(filePath)
         if isFileExcist == True:
             with open(filePath, 'r') as f:
@@ -19,6 +19,6 @@ class DB(list):
         else:
             return
     def saveClientsInDB(self):
-        filePath = "C:\\Users\\Dani\\Documents\\Python\\BankServerClient\\File.txt"
+        filePath = "C:\\PythonProjects\\Bank\\File.txt"
         with open(filePath,'w') as f:
             json.dump([Client.Client.__dict__ for Client.Client in self], f)
