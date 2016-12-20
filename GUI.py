@@ -8,6 +8,8 @@ class ConsoleGUI:
     def __init__(self):
         global clear
         clear = lambda: os.system('cls')
+        global numberOfBitsToRecv
+        numberOfBitsToRecv = 1024
         self.dataArrey = list()
         pass
     def getDataArrey(self):
@@ -73,7 +75,8 @@ class ConsoleGUI:
         :param i_clientSocket: Sends and recv data with the server.
         :return:
         """
-        self.setDataArrey(1)
+        firstOperation = 1
+        self.setDataArrey(firstOperation)
         inputID = self.scanPersonIdFromUser()
         inputPassword = self.scanPersonPasswordFromUser()
         self.setDataArrey(inputID)
@@ -83,7 +86,7 @@ class ConsoleGUI:
         dataArrey = self.getDataArrey()
         dataArreyStr = cPickle.dumps(dataArrey)
         i_clientSocket.send(dataArreyStr)
-        serverFeedbackStr = i_clientSocket.recv(1024)
+        serverFeedbackStr = i_clientSocket.recv(numberOfBitsToRecv)
         serverFeedback = cPickle.loads(serverFeedbackStr) #serverFeedback = [client,token] or "False"
         if serverFeedback == "False":
             print "You entered illegal ID number or password!"
@@ -101,13 +104,16 @@ class ConsoleGUI:
         choice = self.ScanChoiceFromUser([1, 2, 3])
         clear()
         if choice == 1:
-            self.setDataArrey(1)
+            secondOperation = 1
+            self.setDataArrey(secondOperation)
             self.depositMenu(i_clientSocket)
         elif choice == 2:
-            self.setDataArrey(2)
+            secondOperation = 2
+            self.setDataArrey(secondOperation)
             self.withdrawalMenu(i_clientSocket)
         elif choice == 3:
-            self.setDataArrey(3)
+            secondOperation = 3
+            self.setDataArrey(secondOperation)
             self.depositOnAnotherAccountMenu(i_clientSocket)
     def depositMenu(self, i_clientSocket):
         check = False
@@ -121,7 +127,7 @@ class ConsoleGUI:
                 self.setDataArrey(sumToDeposit)
                 dataArreyStr = cPickle.dumps(self.getDataArrey())
                 i_clientSocket.send(dataArreyStr)
-                ifSucceedStr = i_clientSocket.recv(1024)
+                ifSucceedStr = i_clientSocket.recv(numberOfBitsToRecv)
                 ifSucceed = cPickle.loads(ifSucceedStr)
                 if ifSucceed == False:
                     print "The operation didn't succeed."
@@ -146,7 +152,7 @@ class ConsoleGUI:
                 self.setDataArrey(sumToWithdrawal)
                 dataArreyStr = cPickle.dumps(self.getDataArrey())
                 i_clientSocket.send(dataArreyStr)
-                ifSucceedStr = i_clientSocket.recv(1024)
+                ifSucceedStr = i_clientSocket.recv(numberOfBitsToRecv)
                 ifSucceed = cPickle.loads(ifSucceedStr)
                 if ifSucceed == "Illegal Char":
                     print "You entered illegal char."
@@ -176,7 +182,7 @@ class ConsoleGUI:
                 dataArrey = self.getDataArrey()
                 dataArreyStr = cPickle.dumps(dataArrey)
                 i_clientSocket.send(dataArreyStr)
-                ifSucceedStr = i_clientSocket.recv(1024)
+                ifSucceedStr = i_clientSocket.recv(numberOfBitsToRecv)
                 ifSucceed = cPickle.loads(ifSucceedStr)
                 if ifSucceed == False:
                     print "ID number is not excist ! "
@@ -194,7 +200,8 @@ class ConsoleGUI:
         :param i_clientSocket: The client socket after initalization
         :return: None
         """
-        self.setDataArrey(2)
+        firstOperation = 2
+        self.setDataArrey(firstOperation)
         personName = self.scanPersonNameFromUser()
         personId = self.scanPersonIdFromUser()
         personPassword = self.scanPersonPasswordFromUser()
@@ -206,7 +213,7 @@ class ConsoleGUI:
         dataArrey = self.getDataArrey()
         dataArreyStr = cPickle.dumps(dataArrey)
         i_clientSocket.send(dataArreyStr)
-        serverFeedback = i_clientSocket.recv(1024)
+        serverFeedback = i_clientSocket.recv(numberOfBitsToRecv)
         serverFeedbackStr = cPickle.loads(serverFeedback)
         if serverFeedbackStr == "True":
             print "You have joined to the bank!"
@@ -270,11 +277,12 @@ class ConsoleGUI:
 
     # Exit bank
     def exitMenu(self, i_clientSocket):
-        self.setDataArrey(0)
+        firstOperation = 0
+        self.setDataArrey(firstOperation)
         dataArrey = self.getDataArrey()
         dataArreyStr = cPickle.dumps(dataArrey)
         i_clientSocket.send(dataArreyStr)
-        approveExit = i_clientSocket.recv(1024)
+        approveExit = i_clientSocket.recv(numberOfBitsToRecv)
         if approveExit == "True":
             print "Good-Bye :)"
             i_clientSocket.close()

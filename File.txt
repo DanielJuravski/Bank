@@ -1,1 +1,1 @@
-[{"personName": "Daniel", "personId": 1, "clientBalance": 200.0, "personPassword": "1111"}, {"personName": "rdth", "personId": 456, "clientBalance": 5.0, "personPassword": "789"}, {"personName": "A", "personId": 2, "clientBalance": 0.0, "personPassword": "1111"}]
+[{"personName": "Daniel", "personId": 1, "clientBalance": 100.0, "personPassword": "1111"}]

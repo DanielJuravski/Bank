@@ -9,6 +9,8 @@ class BankLogic:
     def __init__(self):
         self.db = DB.DB()
         self.tokenDB = {}
+        global numberOfBitsToRecv
+        numberOfBitsToRecv = 1024
     def getDB(self):
         return self.db
     def getTokenDB(self):
@@ -30,7 +32,7 @@ class BankLogic:
     def main(self):
         clientSocket, serverSocket, clientAddr = self.initializeServerClientSockets()
         while True:
-            dataStr = clientSocket.recv(1024)
+            dataStr = clientSocket.recv(numberOfBitsToRecv)
             data = cPickle.loads(dataStr)
             if data[0] == 1:
                 self.login(clientSocket, data)
@@ -130,7 +132,8 @@ class BankLogic:
             for client in listOfClients:
                 if client.getPersonId() == IDToCheck and client.getPersonPassword() == passwordToCheck:
                     searchInListOfClients = True
-                    token = binascii.b2a_hex(os.urandom(10))
+                    numberOfRand = 10
+                    token = binascii.b2a_hex(os.urandom(numberOfRand))
                     self.tokenDB[IDToCheck] = token
                     dataToSend.append(client)
                     dataToSend.append(token)
