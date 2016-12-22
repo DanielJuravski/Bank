@@ -4,6 +4,10 @@ import re
 import socket
 import cPickle
 import os,binascii
+import threading
+
+global threadLock
+threadLock = threading.Lock()
 
 class BankLogic:
     def __init__(self):
@@ -22,26 +26,24 @@ class BankLogic:
         serverSocket = socket.socket()
         serverSocket.bind((host, port))
 
-        serverSocket.listen(1)
-        clientSocket, addr = serverSocket.accept()
-
-        print "Connection from: " + str(addr) + " started."
-        return clientSocket, serverSocket ,addr
+        serverSocket.listen(5)
+        while True:
+            clientSocket, addr = serverSocket.accept()
+            threading.Thread(target = self.main, args = (clientSocket, addr)).start()
+            print "Connection from: " + str(addr) + " started."
 
     #Main loop
-    def main(self):
-        clientSocket, serverSocket, clientAddr = self.initializeServerClientSockets()
+    def main(self,i_clientSocket, i_clientAddr):
         while True:
-            dataStr = clientSocket.recv(numberOfBitsToRecv)
+            dataStr = i_clientSocket.recv(numberOfBitsToRecv)
             data = cPickle.loads(dataStr)
             if data[0] == 1:
-                self.login(clientSocket, data)
+                self.login(i_clientSocket, data)
             elif data[0] == 2:
-                self.joinNewClient(clientSocket, data)
+                self.joinNewClient(i_clientSocket, data)
             elif data[0] ==0:
-                self.exit(clientSocket, serverSocket, clientAddr)
+                self.exit(i_clientSocket, i_clientAddr)
                 break
-        serverSocket.close()
 
     # Sign-in of a new client
     def joinNewClient(self, i_clientSocket, i_data):
@@ -58,12 +60,12 @@ class BankLogic:
         personPassword = i_data[3]
         ClientBalance = i_data[4]
         if self.checkData(personName,personId,personPassword,ClientBalance) != False :
-            client = Client.Client(None)
-            client.setPersonName(personName)
-            client.setPersonId(personId)
-            client.setPersonPassword(personPassword)
-            client.setClientBalance(float(ClientBalance))
-            self.getDB().append(client)
+            newClient = Client.Client(None)
+            newClient.setPersonName(personName)
+            newClient.setPersonId(personId)
+            newClient.setPersonPassword(personPassword)
+            newClient.setClientBalance(float(ClientBalance))
+            self.getDB().append(newClient)
             msgToClient = "True"
         else:
             msgToClient = "False"
@@ -114,18 +116,18 @@ class BankLogic:
                 If True; sends to the client his unique token.
         If logged; scanning the data the recv from client.
         :param i_clientSocket: Client's socket
-        :param i_data: The client's input.|'Main menu chice'|'ID'|'Password'|'Token'|'Operation menu choice'|'relevant operation data'|
+        :param i_data: The client's input.|'Main menu choice'|'ID'|'Password'|'Token'|'Operation menu choice'|'relevant operation data'|
         :return:
         """
+        threadLock.acquire()
         listOfClients = self.getDB()
         IDToCheck = i_data[1]
         passwordToCheck = i_data[2]
         tokenToCheck = i_data[3]
-        if self.getTokenDB().has_key(IDToCheck):
-            if self.getTokenDB()[IDToCheck] == tokenToCheck:
-                for client in listOfClients:
-                    if client.getPersonId() == IDToCheck:
-                        self.operationsMenu(i_clientSocket, i_data, client)
+        if self.getTokenDB().has_key(IDToCheck) and self.getTokenDB()[IDToCheck] == tokenToCheck:
+            for client in listOfClients:
+                if client.getPersonId() == IDToCheck:
+                    self.operationsMenu(i_clientSocket, i_data, client)
         else:
             dataToSend = list()
             searchInListOfClients = False
@@ -142,6 +144,7 @@ class BankLogic:
             if searchInListOfClients == False:
                 dataToSendStr = cPickle.dumps("False")
                 i_clientSocket.send(dataToSendStr)
+        threadLock.release()
     def operationsMenu(self, i_clientSocket, i_data, i_client):
         clientID = i_data[1]
         operationChoice = i_data[4]
@@ -175,7 +178,7 @@ class BankLogic:
         return False
 
     #Exit bank
-    def exit(self,i_clientSocket, i_serverSocket, i_clientAddr):
+    def exit(self,i_clientSocket, i_clientAddr):
         self.getDB().saveClientsInDB()
         i_clientSocket.send("True")
         print "Connection from: " + str(i_clientAddr) + " ended."

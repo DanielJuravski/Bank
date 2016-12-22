@@ -1,5 +1,9 @@
 import Person
 import json
+import threading
+
+global threadLock
+threadLock = threading.Lock()
 
 class Client(Person.Person):
     def __init__(self,clientBalance):
@@ -13,7 +17,9 @@ class Client(Person.Person):
         for char in range(len(i_depositSum)):
             if i_depositSum[char].isdigit() == False or i_depositSum < 0:
                 return False
+        #threadLock.acquire()
         self.setClientBalance(self.getClientBalance() + float(i_depositSum))
+        #threadLock.release()
         return True
     def withdrawal(self,i_withdrawalSum):
         for char in range(len(i_withdrawalSum)):
