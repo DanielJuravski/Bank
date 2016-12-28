@@ -34,12 +34,14 @@ class serverTest(unittest.TestCase):
                 client.withdrawal("100")
                 client.withdrawal("kjhk")
                 self.failUnless(client.getClientBalance() == originalSum)
-    def test(self):
+    def testDB(self):
         DBToCheck = DB.DB()
         found = False
         for client in DBToCheck :
             if client.getPersonId() == 1:
                 found = True
         self.failIf(found == False)
-
+    def testProgram(self):
+        #self.bank.initializeServerClientSockets()
+        pass
 

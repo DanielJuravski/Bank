@@ -1,0 +1,84 @@
+import threading
+import socket
+import cPickle
+import time
+from time import sleep
+import Client
+
+global numberOfBitsToRecv
+numberOfBitsToRecv = 1024
+
+def main():
+    host = '127.0.0.1'
+    port = 5000
+
+    numberOfActions = 400
+    requestThreads = []
+
+    for i in range(numberOfActions):
+        t = threading.Thread(target = thread1, args = (host, port))
+        requestThreads.append(t)
+        t.start()
+
+    all_done = False
+    while not all_done:
+        all_done = True
+        for t in requestThreads:
+            if t.is_alive():
+                all_done = False
+                time.sleep(1)
+
+    threading.Thread(target = exit, args = (host, port)).start()
+
+
+
+
+def thread1(host,port):
+    socket1 = socket.socket()
+    socket1.connect((host, port))
+    dataToSend = [1, 1, "1111", "NoToken"]
+    dataToSendStr = cPickle.dumps(dataToSend)
+    socket1.send(dataToSendStr)
+    dataInStr = socket1.recv(numberOfBitsToRecv)
+    if dataInStr :
+        dataIn = cPickle.loads(dataInStr)
+        dataToSend[3] = dataIn[1]
+        dataToSend.append(1)
+        dataToSend.append("1")
+        dataToSendStr = cPickle.dumps(dataToSend)
+        socket1.send(dataToSendStr)
+        dataInStr = socket1.recv(numberOfBitsToRecv)
+        dataIn = cPickle.loads(dataInStr)
+        socket1.close() #The socket has been closed, but there was no message on the server dialog box.
+        print dataIn
+
+
+
+
+def exit(host,port):
+    s = socket.socket()
+    s.connect((host, port))
+    dataToSend = [0]
+    dataToSendStr = cPickle.dumps(dataToSend)
+    s.send(dataToSendStr)
+    s.close()
+
+
+
+def deposit1(socket):
+    dataToSend = [1, 1, "1111", "NoToken"]
+    dataToSendStr = cPickle.dumps(dataToSend)
+    socket.send(dataToSendStr)
+    dataInStr = socket.recv(numberOfBitsToRecv)
+    dataIn = cPickle.loads(dataInStr)
+    dataToSend[3] = dataIn[1]
+    dataToSend.append(1)
+    dataToSend.append("1")
+    dataToSendStr = cPickle.dumps(dataToSend)
+    socket.send(dataToSendStr)
+    dataInStr = socket.recv(numberOfBitsToRecv)
+    dataIn = cPickle.loads(dataInStr)
+
+
+if __name__ == '__main__':
+    main()

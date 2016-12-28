@@ -26,7 +26,7 @@ class BankLogic:
         serverSocket = socket.socket()
         serverSocket.bind((host, port))
 
-        serverSocket.listen(5)
+        serverSocket.listen(1)
         while True:
             clientSocket, addr = serverSocket.accept()
             threading.Thread(target = self.main, args = (clientSocket, addr)).start()
@@ -36,13 +36,16 @@ class BankLogic:
     def main(self,i_clientSocket, i_clientAddr):
         while True:
             dataStr = i_clientSocket.recv(numberOfBitsToRecv)
-            data = cPickle.loads(dataStr)
-            if data[0] == 1:
-                self.login(i_clientSocket, data)
-            elif data[0] == 2:
-                self.joinNewClient(i_clientSocket, data)
-            elif data[0] ==0:
-                self.exit(i_clientSocket, i_clientAddr)
+            if dataStr: #check if there was recieved data from client
+                data = cPickle.loads(dataStr)
+                if data[0] == 1:
+                    self.login(i_clientSocket, data)
+                elif data[0] == 2:
+                    self.joinNewClient(i_clientSocket, data)
+                elif data[0] ==0:
+                    self.exit(i_clientSocket, i_clientAddr)
+                    break
+            else:
                 break
 
     # Sign-in of a new client
@@ -119,12 +122,11 @@ class BankLogic:
         :param i_data: The client's input.|'Main menu choice'|'ID'|'Password'|'Token'|'Operation menu choice'|'relevant operation data'|
         :return:
         """
-        threadLock.acquire()
         listOfClients = self.getDB()
         IDToCheck = i_data[1]
         passwordToCheck = i_data[2]
         tokenToCheck = i_data[3]
-        if self.getTokenDB().has_key(IDToCheck) and self.getTokenDB()[IDToCheck] == tokenToCheck:
+        if self.getTokenDB().has_key(tokenToCheck) and self.getTokenDB()[tokenToCheck] == IDToCheck:
             for client in listOfClients:
                 if client.getPersonId() == IDToCheck:
                     self.operationsMenu(i_clientSocket, i_data, client)
@@ -136,7 +138,7 @@ class BankLogic:
                     searchInListOfClients = True
                     numberOfRand = 10
                     token = binascii.b2a_hex(os.urandom(numberOfRand))
-                    self.tokenDB[IDToCheck] = token
+                    self.tokenDB[token] = IDToCheck
                     dataToSend.append(client)
                     dataToSend.append(token)
                     dataToSendStr = cPickle.dumps(dataToSend) #dataToSend = [client,token]
@@ -144,7 +146,6 @@ class BankLogic:
             if searchInListOfClients == False:
                 dataToSendStr = cPickle.dumps("False")
                 i_clientSocket.send(dataToSendStr)
-        threadLock.release()
     def operationsMenu(self, i_clientSocket, i_data, i_client):
         clientID = i_data[1]
         operationChoice = i_data[4]
@@ -160,7 +161,7 @@ class BankLogic:
             anotherID = i_data[6]
             success = self.depositOnAnotherAccount(sumToDepositOnAnotherAccount, anotherID)
             pass
-        del self.getTokenDB()[clientID]
+        #del self.getTokenDB()[clientID]
         successStr = cPickle.dumps(success)
         i_clientSocket.send(successStr)
     def depositOnAccount(self, i_client, i_sum):
