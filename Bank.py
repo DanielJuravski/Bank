@@ -1,4 +1,4 @@
-import Client
+import BankClient
 import DB
 import re
 import socket
@@ -6,27 +6,27 @@ import cPickle
 import os,binascii
 import threading
 
-global threadLock
-threadLock = threading.Lock()
-
 class BankLogic:
     def __init__(self):
         self.db = DB.DB()
         self.tokenDB = {}
         global numberOfBitsToRecv
         numberOfBitsToRecv = 1024
+
     def getDB(self):
         return self.db
+
     def getTokenDB(self):
         return self.tokenDB
+
     def initializeServerClientSockets(self):
-        host = '127.0.0.1'
+        host = "localhost"
         port = 5000
 
         serverSocket = socket.socket()
         serverSocket.bind((host, port))
 
-        serverSocket.listen(1)
+        serverSocket.listen(5)
         while True:
             clientSocket, addr = serverSocket.accept()
             threading.Thread(target = self.main, args = (clientSocket, addr)).start()
@@ -63,7 +63,7 @@ class BankLogic:
         personPassword = i_data[3]
         ClientBalance = i_data[4]
         if self.checkData(personName,personId,personPassword,ClientBalance) != False :
-            newClient = Client.Client(None)
+            newClient = BankClient.Client(None)
             newClient.setPersonName(personName)
             newClient.setPersonId(personId)
             newClient.setPersonPassword(personPassword)
@@ -74,20 +74,25 @@ class BankLogic:
             msgToClient = "False"
         msgToClientDump = cPickle.dumps(msgToClient)
         i_clientSocket.send(msgToClientDump)
+
     def checkFromUserPersonName(self, i_personName):
         if i_personName.isalpha():
             return True
         else:
             return False
+
     def checkFromUserPersonID(self, i_personID):
         return self.parseIntRE(i_personID)
+
     def checkFromUserPersonPassword(self,i_personPassword):
         return True
+
     def checkFromUserClientBalance(self,i_clientBalance):
         for char in range(len(i_clientBalance)):
             if i_clientBalance[char].isdigit() == False or i_clientBalance < 0:
                 return False
         return True
+
     def checkData(self, i_personName, i_personID, i_personPassword, i_clientBalance):
         """
         Checks if all the that recieved from the client is legal.
@@ -103,6 +108,7 @@ class BankLogic:
         check3 = self.checkFromUserPersonPassword(i_personPassword)
         check4 = self.checkFromUserClientBalance(i_clientBalance)
         return check1 and check2 and check3 and check4
+
     def parseIntRE(self,i_ToCheck):
         i_strToCheck = str(i_ToCheck)
         match = re.search('(\d+)',i_strToCheck)
@@ -131,21 +137,50 @@ class BankLogic:
                 if client.getPersonId() == IDToCheck:
                     self.operationsMenu(i_clientSocket, i_data, client)
         else:
-            dataToSend = list()
-            searchInListOfClients = False
-            for client in listOfClients:
-                if client.getPersonId() == IDToCheck and client.getPersonPassword() == passwordToCheck:
-                    searchInListOfClients = True
-                    numberOfRand = 10
-                    token = binascii.b2a_hex(os.urandom(numberOfRand))
-                    self.tokenDB[token] = IDToCheck
-                    dataToSend.append(client)
-                    dataToSend.append(token)
-                    dataToSendStr = cPickle.dumps(dataToSend) #dataToSend = [client,token]
-                    i_clientSocket.send(dataToSendStr)
-            if searchInListOfClients == False:
-                dataToSendStr = cPickle.dumps("False")
-                i_clientSocket.send(dataToSendStr)
+            feedback = self.clientRegistrationInFirstTime(listOfClients, IDToCheck, passwordToCheck)
+            i_clientSocket.send(feedback)
+
+    def clientRegistrationInFirstTime(self, i_listOfClients, i_IDToCheck, i_passwordToCheck):
+        """
+        Checks if the client data that was entered is right. If so, returns unique token to the client.
+        Else returns false.
+        :param i_listOfClients: DB of all clients of the bank.
+        :param i_IDToCheck: ID entered from client.
+        :param i_passwordToCheck: Password entered from client.
+        :return: feedback: Data for sending to the client. If ID and password correct- the client's token.
+                                                           Else, returns false.
+        """
+        tokenDB = self.getTokenDB()
+        dataToSend = list()
+        dataToSendStr = None
+        searchInListOfClients = False
+        for client in i_listOfClients:
+            if client.getPersonId() == i_IDToCheck and client.getPersonPassword() == i_passwordToCheck:
+                searchInListOfClients = True
+                token = self.randomizeToken(tokenDB)
+                self.tokenDB[token] = i_IDToCheck
+                dataToSend.append(client)
+                dataToSend.append(token)
+                dataToSendStr = cPickle.dumps(dataToSend) # dataToSend = [client,token]
+                break
+        if searchInListOfClients == False:
+            dataToSendStr = cPickle.dumps("False")
+        return dataToSendStr
+
+    def randomizeToken(self, i_tokenDB):
+        """
+        Rand token value and checks if ecist in tokenDB allready. If is, rand another time.
+        :param i_tokenDB: DB of tokens.
+        :return: Token value.
+        """
+        tokenExcistInTokenDB = True
+        numberDigitsOfRand = 10
+        token = binascii.b2a_hex(os.urandom(numberDigitsOfRand))
+        while tokenExcistInTokenDB:
+            if i_tokenDB.has_key(token) == False:
+                tokenExcistInTokenDB = False
+        return token
+
     def operationsMenu(self, i_clientSocket, i_data, i_client):
         clientID = i_data[1]
         operationChoice = i_data[4]
@@ -161,13 +196,15 @@ class BankLogic:
             anotherID = i_data[6]
             success = self.depositOnAnotherAccount(sumToDepositOnAnotherAccount, anotherID)
             pass
-        #del self.getTokenDB()[clientID]
         successStr = cPickle.dumps(success)
         i_clientSocket.send(successStr)
+
     def depositOnAccount(self, i_client, i_sum):
         return i_client.deposit(i_sum)
+
     def withdrawalOnAccount(self, i_client, i_sum):
         return i_client.withdrawal(i_sum)
+
     def depositOnAnotherAccount(self, i_sum, i_anotherID):
         arreyOfClients = self.getDB()
         for client in arreyOfClients:

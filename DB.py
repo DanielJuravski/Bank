@@ -1,4 +1,4 @@
-import Client
+import BankClient
 import json
 import os
 
@@ -10,7 +10,7 @@ class DB(list):
             with open(filePath, 'r') as f:
                 data = json.load(f)
                 for arg in range(0, len(data)):
-                    dbClient = Client.Client(None)
+                    dbClient = BankClient.Client(None)
                     dbClient.personName = str(data[arg]["personName"])
                     dbClient.personId = int(data[arg]["personId"])
                     dbClient.personPassword = data[arg]["personPassword"]
@@ -18,7 +18,8 @@ class DB(list):
                     self.append(dbClient)
         else:
             return
+
     def saveClientsInDB(self):
         filePath = "C:\\PythonProjects\\Bank\\File.txt"
         with open(filePath,'w') as f:
-            json.dump([Client.Client.__dict__ for Client.Client in self], f)
+            json.dump([BankClient.Client.__dict__ for BankClient.Client in self], f)

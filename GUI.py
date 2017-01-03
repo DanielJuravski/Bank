@@ -3,7 +3,6 @@ import socket
 import re
 import cPickle
 
-
 class ConsoleGUI:
     def __init__(self):
         global clear
@@ -12,15 +11,19 @@ class ConsoleGUI:
         numberOfBitsToRecv = 1024
         self.dataArrey = list()
         pass
+
     def getDataArrey(self):
         return self.dataArrey
+
     def setDataArrey(self,i_choice):
         self.getDataArrey().append(i_choice)
+
     def resetDataArrey(self):
         length = len(self.dataArrey)
         for i in range(length - 1, -1, -1):
             del self.dataArrey[i]
         pass
+
     def ScanChoiceFromUser(self, optionsArrey):
         choice = None
         try:
@@ -34,6 +37,7 @@ class ConsoleGUI:
             except ValueError:
                 None
         return choice
+
     def initializeSocket(self):
         host = '127.0.0.1'
         port = 5000
@@ -97,6 +101,7 @@ class ConsoleGUI:
             clear()
             print "Hello " + thisClient.getPersonName() + "!\n"
             self.optionsMenu(i_clientSocket)
+
     def optionsMenu(self, i_clientSocket):
         print "For depositing press -----------------------> 1 \n" \
               "For withdrawaling press --------------------> 2 \n" \
@@ -115,6 +120,7 @@ class ConsoleGUI:
             secondOperation = 3
             self.setDataArrey(secondOperation)
             self.depositOnAnotherAccountMenu(i_clientSocket)
+
     def depositMenu(self, i_clientSocket):
         check = False
         while check == False:
@@ -134,12 +140,14 @@ class ConsoleGUI:
                 else:
                     print "Done!"
         raw_input("Please press any key to continue:")
+
     def depositCheck(self, i_depositSum):
         for char in range(len(i_depositSum)):
             if i_depositSum[char].isdigit() == False or i_depositSum < 0:
                 return False
             else:
                 return True
+
     def withdrawalMenu(self, i_clientSocket):
         check = False
         while check == False:
@@ -161,12 +169,14 @@ class ConsoleGUI:
                 elif ifSucceed == "Done":
                     print "Done!"
         raw_input("Please press any key to continue:")
+
     def withdrawalCheck(self, i_withdrawalSum):
         for char in range(len(i_withdrawalSum)):
             if i_withdrawalSum[char].isdigit() == False or i_withdrawalSum < 0:
                 return False
             else:
                 return True
+
     def depositOnAnotherAccountMenu(self, i_clientSocket):
         anotherID = self.scanPersonIdFromUser()
         check = False
@@ -220,6 +230,7 @@ class ConsoleGUI:
         else:
             print "You have entered illegal data, please try again."
         raw_input("Please press any key to continue:")
+
     def scanPersonIdFromUser(self):
         # TODO: check if the given ID is excist allready
         check = False
@@ -230,6 +241,7 @@ class ConsoleGUI:
                 print "Illegal ID number, try again:"
         personID = int(personID)
         return personID
+
     def scanPersonNameFromUser(self):
         check = False
         while check == False:
@@ -238,6 +250,7 @@ class ConsoleGUI:
             if check == False:
                 print "Illegal name, try again:"
         return personName
+
     def scanPersonPasswordFromUser(self):
         check = False
         while check == False:
@@ -246,6 +259,7 @@ class ConsoleGUI:
             if check == False:
                 print "Illegal password, try again:"
         return personPassword
+
     def scanClientBalanceFromUser(self):
         check = False
         while check == False:
@@ -255,20 +269,25 @@ class ConsoleGUI:
                 print "Balance should be positive number, try again:"
         #clientBalance = float(clientBalance)
         return clientBalance
+
     def checkFromUserPersonID(self, i_personID):
         return self.parseIntRE(i_personID)
+
     def parseIntRE(self,i_strToCheck):
         match = re.search('(\d+)',i_strToCheck)
         if match != None and match.group() == i_strToCheck:
             return True
         return False
+
     def checkFromUserPersonName(self,i_personName):
         if i_personName.isalpha():
             return True
         else:
             return False
+
     def checkFromUserPersonPassword(self, i_personPassword):
         return True
+
     def checkFromUserClientBalance(self,i_clientBalance):
         for char in range(len(i_clientBalance)):
             if i_clientBalance[char].isdigit() == False or i_clientBalance < 0:
